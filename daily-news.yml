@@ -1,0 +1,40 @@
+
+name: Generate Daily News
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Every day at 7:15 AM Singapore time
+    - cron: "15 23 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  generate-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install openai
+
+      - name: Generate news
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python generate_news.py
+
+      - name: Save news report
+        run: |
+          mkdir -p reports
+          git add reports/
+          git diff --cached --quiet || \
+            git commit -m "Update daily news report"
+          git push
